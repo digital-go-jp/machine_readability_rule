@@ -186,6 +186,6 @@ Issue への対応は、内部の優先度判断に基づき行います。
 ## ライセンスについて
 
 * 行政データにおける機械可読性に関するルールを記載した以下のファイル及び各種ドキュメントファイル（.md）については、[公共データ利用規約第1.0版（PDL1.0）ライセンス](../LICENSE.md)が適用されます。
-  * [machine-redability-rules.json](../machine-redability-rules.json)
-  * [machine-redability-rules.csv](../machine-redability-rules.csv)
+  * [machine-redability-rules.json](../machine-readability-rules.json)
+  * [machine-redability-rules.csv](../machine-readability-rules.csv)
 * サンプル実装アプリ部分（`sample_app/`）には[MITライセンス](../LICENSE-MIT.md)が適用されます。
