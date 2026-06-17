@@ -1,0 +1,94 @@
+[project]
+name = "harunobu"
+version = "0.1.0"
+description = "行政データ（Excel/CSV）の機械可読性を判定するシステム"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Digital Agency, Government of Japan"},
+]
+keywords = ["machine-readability", "excel", "csv", "data-quality", "open-data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Office/Business :: Financial :: Spreadsheet",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "magika>=1.0.2",
+    "openpyxl>=3.1.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+litellm = ["litellm>=1.40.0"]
+ai = ["harunobu[litellm]", "google-genai>=1.0.0"]
+ui = ["streamlit>=1.57.0", "pandas>=2.0.0"]
+all = ["harunobu[ai,ui]"]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.8.0",
+    "playwright>=1.58.0",
+    "pytest-playwright>=0.7.2",
+]
+
+[project.urls]
+Repository = "https://github.com/digital-go-jp/machine_readability_rule"
+Documentation = "https://github.com/digital-go-jp/machine_readability_rule/tree/main/sample_app/docs"
+"Bug Tracker" = "https://github.com/digital-go-jp/machine_readability_rule/issues"
+
+[project.scripts]
+harunobu = "harunobu.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["harunobu"]
+
+[tool.uv]
+# 直近公開パッケージの取り込みを遅らせ、サプライチェーン攻撃の影響を抑える
+exclude-newer = "14 days"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "D"]
+# 英語の文法・句読点を前提とする規則は日本語 docstring と相性が悪いため無効化
+# D400=末尾ピリオド, D401=命令形, D403=先頭大文字, D415=末尾句読点
+# D107=__init__ の docstring（クラス docstring に集約する方針のため不要）
+ignore = ["D400", "D401", "D403", "D415", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# テストはモジュール docstring(D100) のみ必須。クラス/メソッド/関数は免除
+"tests/**" = ["D101", "D102", "D103", "D104", "D105", "D106", "D107"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "annotation_tracker: 改善トラッカー用テスト（xfail 維持、通常 CI では除外して別ワークフローで実行・レポート化）",
+]
+
+[dependency-groups]
+dev = [
+    "jsonschema>=4.26.0",
+    "matplotlib>=3.10.8",
+    "pillow>=12.1.1",
+]

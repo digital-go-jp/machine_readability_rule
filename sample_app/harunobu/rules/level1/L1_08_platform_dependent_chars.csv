@@ -1,0 +1,4 @@
+char,category,severity,note
+㋿,reiwa_era,warning,令和合字 U+32FF
+〜,wave_dash,warning,波ダッシュ U+301C (CP932 にあるが Python shift_jis codec 非対応)
+～,fullwidth_tilde,warning,全角チルダ U+FF5E (波ダッシュ問題)

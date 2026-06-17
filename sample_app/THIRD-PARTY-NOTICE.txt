@@ -1,0 +1,73 @@
+This project incorporates components from the following third-party libraries:
+
+* google-genai (Apache-2.0)
+  Authors: Google and Contributors
+  Source: https://github.com/googleapis/python-genai
+
+* jsonschema (MIT)
+  Authors: Jason Scheirer and Contributors
+  Source: https://github.com/python-jsonschema/jsonschema
+
+* litellm (MIT)
+  Authors: BerriAI and Contributors
+  Source: https://github.com/BerriAI/litellm
+
+* magika (Apache-2.0)
+  Authors: Google and Contributors
+  Source: https://github.com/google/magika
+
+* matplotlib (matplotlib License)
+  Authors: Matplotlib Development Team and Contributors
+  Source: https://github.com/matplotlib/matplotlib
+
+* openpyxl (MIT)
+  Authors: Eric Gazoni, Charlie Clark and Contributors
+  Source: https://foss.heptapod.net/openpyxl/openpyxl
+
+* pandas (BSD-3-Clause)
+  Authors: pandas Development Team and Contributors
+  Source: https://github.com/pandas-dev/pandas
+
+* pillow (HPND)
+  Authors: Alex Clark and Contributors
+  Source: https://github.com/python-pillow/Pillow
+
+* playwright (Apache-2.0)
+  Authors: Microsoft Corporation and Contributors
+  Source: https://github.com/microsoft/playwright-python
+
+* pydantic (MIT)
+  Authors: Samuel Colvin and Contributors
+  Source: https://github.com/pydantic/pydantic
+
+* pytest (MIT)
+  Authors: Holger Krekel, Bruno Oliveira and Contributors
+  Source: https://github.com/pytest-dev/pytest
+
+* pytest-playwright (Apache-2.0)
+  Authors: Microsoft Corporation and Contributors
+  Source: https://github.com/microsoft/playwright-pytest
+
+* python-docx (MIT)
+  Authors: Steve Canny and Contributors
+  Source: https://github.com/python-openxml/python-docx
+
+* PyYAML (MIT)
+  Authors: Kirill Simonov and Contributors
+  Source: https://github.com/yaml/pyyaml
+
+* reportlab (BSD License)
+  Authors: Andy Robinson, Robin Becker, the ReportLab team and the community
+  Source: https://hg.reportlab.com/hg-public/reportlab
+
+* ruff (MIT)
+  Authors: Astral Software and Contributors
+  Source: https://github.com/astral-sh/ruff
+
+* streamlit (Apache-2.0)
+  Authors: Streamlit Inc. and Contributors
+  Source: https://github.com/streamlit/streamlit
+
+* xlsxwriter (BSD-2-Clause)
+  Authors: John McNamara and Contributors
+  Source: https://github.com/jmcnamara/XlsxWriter

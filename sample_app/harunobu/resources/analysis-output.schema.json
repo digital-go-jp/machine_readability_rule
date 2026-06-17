@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harunobu Analysis Output",
+  "description": "採点結果の出力JSONスキーマ。スコアはレベル別のみ（総合点なし）。",
+  "type": "object",
+  "required": ["inputファイル名", "ファイルサイズ", "フォーマット", "Sheet数", "レベル別スコア", "sheets"],
+  "properties": {
+    "inputファイル名": { "type": "string" },
+    "ファイルサイズ": { "type": "integer", "minimum": 0 },
+    "フォーマット": { "type": "string", "enum": ["xlsx", "csv", "tsv"] },
+    "Sheet数": { "type": "integer", "minimum": 0 },
+    "レベル別スコア": {
+      "type": "object",
+      "required": ["1", "2", "3"],
+      "properties": {
+        "1": { "oneOf": [{ "$ref": "#/$defs/levelScore" }, { "type": "null" }] },
+        "2": { "oneOf": [{ "$ref": "#/$defs/levelScore" }, { "type": "null" }] },
+        "3": { "oneOf": [{ "$ref": "#/$defs/levelScore" }, { "type": "null" }] }
+      },
+      "additionalProperties": false
+    },
+    "sheets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sheetResult" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "levelScore": {
+      "type": "object",
+      "required": ["スコア", "合格", "合計", "強制0点", "強制0点ルール", "失敗ルール"],
+      "properties": {
+        "スコア": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "合格": { "type": "integer", "minimum": 0 },
+        "合計": { "type": "integer", "minimum": 0 },
+        "強制0点": { "type": "boolean" },
+        "強制0点ルール": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/failedRule" }
+        },
+        "失敗ルール": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/failedRule" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "failedRule": {
+      "type": "object",
+      "required": ["ルールID", "重大度"],
+      "properties": {
+        "ルールID": { "type": "string" },
+        "重大度": { "type": "string", "enum": ["fatal", "critical", "major", "minor", "info"] }
+      },
+      "additionalProperties": false
+    },
+    "sheetResult": {
+      "type": "object",
+      "required": ["シート名", "使用範囲", "非表示", "評価対象エリア"],
+      "properties": {
+        "シート名": { "type": "string" },
+        "使用範囲": { "type": "string" },
+        "非表示": { "type": "boolean" },
+        "評価対象エリア": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tableResult" }
+        },
+        "sheetProperty": { "$ref": "#/$defs/sheetProperty" },
+        "others": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/otherCell" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "sheetProperty": {
+      "type": "object",
+      "required": ["sheetName", "maxRow", "maxCol", "hidden"],
+      "properties": {
+        "sheetName": { "type": "string" },
+        "maxRow": { "type": "integer" },
+        "maxCol": { "type": "integer" },
+        "hidden": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "otherCell": {
+      "type": "object",
+      "required": ["row", "col", "value", "regionType"],
+      "properties": {
+        "row": { "type": "integer" },
+        "col": { "type": "integer" },
+        "value": {},
+        "regionType": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "tableResult": {
+      "type": "object",
+      "required": ["範囲", "信頼度", "ヘッダー行", "ヘッダー範囲", "列数", "評価内容"],
+      "properties": {
+        "範囲": { "type": "string" },
+        "信頼度": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "ヘッダー行": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "ヘッダー範囲": {
+          "type": ["string", "null"]
+        },
+        "列数": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "評価内容": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/checkResult" }
+        },
+        "columnHeaders": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/columnHeader" }
+        },
+        "columns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/columnSchema" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "columnHeader": {
+      "type": "object",
+      "required": ["colIndex", "headerRows", "label", "isMerged"],
+      "properties": {
+        "colIndex": { "type": "integer" },
+        "headerRows": {
+          "type": "array",
+          "items": { "type": "integer" }
+        },
+        "label": { "type": "string" },
+        "isMerged": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "columnSchema": {
+      "type": "object",
+      "required": ["colIndex", "inferredType", "hasHeader"],
+      "properties": {
+        "colIndex": { "type": "integer" },
+        "inferredType": {
+          "type": "string",
+          "enum": ["text", "numeric", "date", "mixed", "empty"]
+        },
+        "hasHeader": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "checkResult": {
+      "type": "object",
+      "required": ["ルールID", "合否", "判定対象外", "重大度", "信頼度", "違反", "メッセージ"],
+      "properties": {
+        "ルールID": { "type": "string", "pattern": "^L[1-3]-\\d{2}$" },
+        "合否": { "type": "boolean" },
+        "判定対象外": { "type": "boolean" },
+        "重大度": { "type": "string", "enum": ["fatal", "critical", "major", "minor", "info"] },
+        "信頼度": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "違反": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/violation" }
+        },
+        "違反グループ": { "$ref": "#/$defs/violationGroupSummary" },
+        "メッセージ": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "violation": {
+      "type": "object",
+      "required": ["シート", "セル範囲", "説明", "違反重大度"],
+      "properties": {
+        "シート": { "type": "string" },
+        "セル範囲": { "type": "string" },
+        "説明": { "type": "string" },
+        "違反重大度": { "type": "string", "enum": ["error", "warning", "info"] }
+      },
+      "additionalProperties": false
+    },
+    "violationGroupSummary": {
+      "description": "violations が VIOLATIONS_DISPLAY_LIMIT を超えた場合に付与される (sheet, severity) 単位の集計。「違反」フィールドには全件の生データが引き続き格納される。",
+      "type": "object",
+      "required": ["合計件数", "グループ"],
+      "properties": {
+        "合計件数": { "type": "integer", "minimum": 0 },
+        "グループ": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["シート", "重大度", "件数", "代表セル範囲"],
+            "properties": {
+              "シート": { "type": "string" },
+              "重大度": { "type": "string", "enum": ["error", "warning", "info"] },
+              "件数": { "type": "integer", "minimum": 1 },
+              "代表セル範囲": {
+                "type": "array",
+                "items": { "type": "string" },
+                "maxItems": 3
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
