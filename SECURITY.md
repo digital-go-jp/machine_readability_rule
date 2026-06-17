@@ -2,7 +2,7 @@
 
 ## 脆弱性の報告
 
-セキュリティに関する脆弱性を発見された場合は、**[GitHub Security Advisories](https://docs.github.com/ja/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) を通じて非公開で報告してください。
+セキュリティに関する脆弱性を発見された場合は、[GitHub Security Advisories](https://docs.github.com/ja/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) を通じて非公開で報告してください。
 
 ## 対応フロー
 
