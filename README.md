@@ -8,12 +8,12 @@
 
 本リポジトリでは、PDF形式で公開されている上記ルールについて、機械可読性を確保したJSON形式およびCSV形式で公開を行っています。
 
-* [行政データにおける機械可読性に関するルール（JSON形式）](docs/references/machine-readability-rules.json)
-* [行政データにおける機械可読性に関するルール（CSV形式）](docs/references/machine-readability-rules.csv)
+* [行政データにおける機械可読性に関するルール（JSON形式）](./machine-readability-rules.json)
+* [行政データにおける機械可読性に関するルール（CSV形式）](./machine-readability-rules.csv)
 
 上記ルールを基に、AI等を利用してデータ整備を行うシステムの整備基準として組み込むといった利用方法を想定しています。
 
 ## サンプル実装アプリについて
 
 [`sample_app/`](sample_app/) ディレクトリ配下では、実際にルールを組み込んだ判定プログラムのサンプルを格納しています。
-CSV形式やExcel形式のファイルに対して、 [行政データにおける機械可読性に関するルール（JSON形式）](docs/references/machine-readability-rules.json) をベースにデータ整備を行う際の参考としてご活用ください。
+CSV形式やExcel形式のファイルに対して、 [行政データにおける機械可読性に関するルール（JSON形式）](./machine-readability-rules.json) をベースにデータ整備を行う際の参考としてご活用ください。

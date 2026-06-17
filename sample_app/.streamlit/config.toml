@@ -1,0 +1,25 @@
+[theme]
+primaryColor = "#ec0000"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f2f2f2"
+textColor = "#1a1a1a"
+font = "'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif"
+headingFont = "'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif"
+codeFont = "'Noto Sans Mono', monospace"
+baseFontSize = 16
+baseRadius = "8px"
+buttonRadius = "8px"
+borderColor = "#cccccc"
+dataframeBorderColor = "#cccccc"
+dataframeHeaderBackgroundColor = "#f2f2f2"
+
+[theme.sidebar]
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f2f2f2"
+textColor = "#1a1a1a"
+font = "'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif"
+headingFont = "'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif"
+codeFont = "'Noto Sans Mono', monospace"
+
+[server]
+maxUploadSize = 10
