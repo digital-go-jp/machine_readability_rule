@@ -4,8 +4,8 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.18 /uv /usr/local/bin/uv
 
 ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
-    UV_PROJECT_ENVIRONMENT=./.venv \
-    PATH="./.venv/bin:${PATH}" \
+    UV_PROJECT_ENVIRONMENT=/app/.venv \
+    PATH="/app/.venv/bin:${PATH}" \
     STREAMLIT_SERVER_PORT=8080 \
     STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
     STREAMLIT_SERVER_HEADLESS=true \
