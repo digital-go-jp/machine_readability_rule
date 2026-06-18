@@ -4,7 +4,8 @@
 
 ```
 tests/
-├── conftest.py              # グローバルfixture
+├── conftest.py              # ルートレベルfixture（rules/conftest.pyの再エクスポート）
+├── test_layout_header_detection.py
 ├── rules/                   # ルールごとのユニットテスト
 │   ├── conftest.py          # ルールテスト共通fixture（create_workbook, create_context）
 │   ├── L1_01_file_format/
@@ -16,14 +17,23 @@ tests/
 ├── core/                    # コア機能のテスト
 │   ├── test_analyzer.py
 │   └── ...
+├── output/                  # 出力writerのテスト
+│   └── test_writer_violation_summary.py
+├── resources/               # テスト用リソース
+│   └── test_region_dict.py
 ├── integration/             # 統合テスト
-│   ├── good_samples/        # good_samplesを使った検証（独自conftest）
-│   │   └── conftest.py      # good_samples固有fixture（analyze_file等）
-│   ├── sample_rules/        # サンプルファイルを使ったルール検証（独自conftest）
+│   ├── sample_rules/        # sample_by_mr_rulesのサンプルを使ったルール検証
 │   │   └── conftest.py      # sample_rules固有fixture（collect_samples等）
+│   ├── test_pipeline.py
 │   ├── test_output.py
 │   └── ...
+├── sample_by_mr_rules/      # ルール別サンプルデータと生成スクリプト
+│   ├── README.md
+│   ├── generate_test_data.py
+│   ├── sample_generators/
+│   └── samples/
 └── ui/                      # UI E2Eテスト
+    ├── conftest.py
     ├── fixtures/
     │   └── test_data.xlsx
     └── ...
@@ -48,13 +58,20 @@ uv run pytest -v
 
 # annotation_tracker マーカーのテスト（改善トラッキング用、通常はスキップ）
 uv run pytest -m annotation_tracker
+
+# sample_by_mr_rules のサンプルデータを再生成
+uv run tests/sample_by_mr_rules/generate_test_data.py
+
+# 指定ルールだけサンプルデータを再生成
+uv run tests/sample_by_mr_rules/generate_test_data.py --rules 8
 ```
+
+`annotation_tracker` マーカーは `pyproject.toml` に登録済み。
+`generate_test_data.py` は PEP 723 metadata で Python 3.12+ と追加依存を宣言しており、`uv run` がそれらを解決。
 
 ## テストfixture
 
 ### `create_workbook` fixture
-
-テスト用の `WorkBook` オブジェクトをプログラム的に生成するfactoryです。実際のExcelファイルを必要とせず、テストデータをPythonコードで定義できます。
 
 ```python
 def test_example(create_workbook):
@@ -78,7 +95,6 @@ def test_example(create_workbook):
 
 ### `create_context` fixture
 
-`create_workbook` を内部で使用し、ルールの `check()` メソッドに渡す `TableContext` を直接生成します。レイアウト推定（ヘッダー行・ボディ範囲）も自動で行います。
 
 ```python
 def test_rule(create_context):
@@ -89,7 +105,8 @@ def test_rule(create_context):
                 [1, 100],
                 [2, 200],
             ]
-        }
+        },
+        stub_cols=[1],
     )
     rule = SomeRule()
     result = rule.check(context)
@@ -107,8 +124,11 @@ def test_rule(create_context):
 | `hidden_rows` | `dict[str, list[int]]` | シート名→非表示行番号リスト |
 | `hidden_cols` | `dict[str, list[int]]` | シート名→非表示列番号リスト |
 | `formulas` | `dict[str, dict[tuple[int, int], str]]` | シート名→(行, 列)→数式文字列 |
+| `encoding` | `str \| None` | ファイルの文字エンコーディング |
+| `sheet_index` | `int` | 対象シートのインデックス。デフォルト: `0`（`create_context` のみ） |
 | `config` | `Config \| None` | 設定オーバーライド（`create_context` のみ） |
 | `column_schemas` | `list[ColumnSchema] \| None` | カラムスキーマのオーバーライド（`create_context` のみ） |
+| `stub_cols` | `list[int] \| None` | 行ヘッダー列番号のオーバーライド（`create_context` のみ） |
 
 ## 新しいルールのテスト追加手順
 
@@ -145,8 +165,8 @@ def test_rule(create_context):
 
 ## コード品質
 
-- **命名規約**: snake_case（変数・関数）、PascalCase（クラス）、定数は UPPER_SNAKE_CASE
-- **型ヒント**: すべての関数シグネチャに型アノテーションを付与（Python 3.12+ 記法）
-- **テスト命名**: `test_` プレフィックス + 検証内容を端的に表現（例: `test_no_merged_cells`, `test_single_merge_in_header`）
-- **テストクラス**: 同一ルールのテストは `TestRuleName` クラスにまとめる
-- **1テスト1観点**: 各テスト関数は1つの振る舞いのみを検証する
+- 命名規約: snake_case（変数・関数）、PascalCase（クラス）、定数は UPPER_SNAKE_CASE
+- 型ヒント: すべての関数シグネチャに型アノテーションを付与（Python 3.10+ 互換の記法）
+- テスト命名: `test_` プレフィックス + 検証内容を端的に表現（例: `test_no_merged_cells`, `test_single_merge_in_header`）
+- テストクラス: 同一ルールのテストは `TestRuleName` クラスにまとめる
+- 1テスト1観点: 各テスト関数は1つの振る舞いのみを検証する

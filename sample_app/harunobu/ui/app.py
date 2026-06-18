@@ -55,14 +55,17 @@ def main() -> None:
 
     if st.session_state.get("_prev_workflow_step") != current_step:
         scroll_script = """<script>
-            var el = window.parent.document.querySelector('[data-testid="stMain"]');
+            var el = document.querySelector('[data-testid="stMain"]');
             if (el) el.scrollTop = 0;
             </script>"""
         st.session_state._prev_workflow_step = current_step
     else:
-        scroll_script = ""
-    # 要素を常に同じ位置に配置することで、rerun をまたいだ要素位置のずれを防ぐ
-    st.components.v1.html(scroll_script, height=0)
+        scroll_script = "<!-- -->"
+    # 要素を常に同じ位置・同じ高さに配置することで、rerun をまたいだ要素位置のずれを防ぐ
+    st.html(
+        f'<div style="height:0;overflow:hidden;margin:0;padding:0">{scroll_script}</div>',
+        unsafe_allow_javascript=True,
+    )
 
     renderer = _PAGE_RENDERERS.get(current_step)
 

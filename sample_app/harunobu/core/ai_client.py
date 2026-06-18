@@ -17,6 +17,46 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _strip_code_fence(text: str) -> str:
+    """Markdown のコードフェンス（```json … ```）を除去する。
+
+    一部モデル（Anthropic claude-4.x 等）は ``response_format=json_object`` 指定でも
+    JSON をコードフェンスで囲んで返すため、`json.loads` の前に取り除く。
+
+    Args:
+        text: LLM が返した生テキスト。
+
+    Returns:
+        フェンスを除去したテキスト（フェンスが無ければ trim のみ）。
+    """
+    s = text.strip()
+    if not s.startswith("```"):
+        return s
+    # 先頭フェンス行（```json 等）を除去
+    newline = s.find("\n")
+    s = s[newline + 1 :] if newline != -1 else s[3:]
+    # 末尾フェンスを除去
+    s = s.rstrip()
+    if s.endswith("```"):
+        s = s[:-3]
+    return s.strip()
+
+
+def _parse_json_response(text: str | None) -> Any | None:
+    """LLM のテキスト応答を JSON として解釈する（コードフェンス耐性あり）。
+
+    Args:
+        text: LLM が返した生テキスト。空・None の場合は None を返す。
+
+    Returns:
+        解析済みオブジェクト。本文が空の場合は None。
+    """
+    if not text:
+        return None
+    cleaned = _strip_code_fence(text)
+    return json.loads(cleaned) if cleaned else None
+
+
 def _resolve_ai_config() -> tuple[str, str, str | None]:
     """環境変数から (provider, model, fallback_model) を解決する。"""
     provider = os.environ.get("HARUNOBU_AI_PROVIDER", "gemini")
@@ -172,22 +212,45 @@ class AIClient:
 
     # ─── LiteLLM バックエンド ────────────────────────────────────────
 
-    def _generate_json_litellm(self, prompt: str, method_name: str) -> Any | None:
+    @staticmethod
+    def _litellm_completion(model_id: str, messages: list[dict[str, Any]]) -> Any:
+        """litellm.completion を JSON モードで呼ぶ。
+
+        ``drop_params=True`` で未対応パラメータを除去するが、litellm のモデルマップに
+        未登録の新しいモデル（GPT-5 系・Claude Opus 4.x 等）では temperature が
+        除去されずエラーになる。その場合は temperature を外して再試行する。
+
+        Args:
+            model_id: litellm 形式の model id。
+            messages: チャットメッセージ列。
+
+        Returns:
+            litellm のレスポンスオブジェクト。
+        """
         import litellm
 
+        kwargs: dict[str, Any] = {
+            "model": model_id,
+            "messages": messages,
+            "response_format": {"type": "json_object"},
+            "drop_params": True,
+        }
+        try:
+            return litellm.completion(temperature=0.1, **kwargs)
+        except Exception as e:
+            if "temperature" in str(e).lower():
+                logger.info("Model %s rejects temperature; retrying without it", model_id)
+                return litellm.completion(**kwargs)
+            raise
+
+    def _generate_json_litellm(self, prompt: str, method_name: str) -> Any | None:
         from harunobu.core.ai_metrics import track_ai_call
 
         model_id = self._get_litellm_model_id()
         with track_ai_call(method_name, model_id) as tracker:
-            response = litellm.completion(
-                model=model_id,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                response_format={"type": "json_object"},
-            )
+            response = self._litellm_completion(model_id, [{"role": "user", "content": prompt}])
             tracker.set_tokens_from_response(response)
-            text = response.choices[0].message.content
-            return json.loads(text) if text else None
+            return _parse_json_response(response.choices[0].message.content)
 
     def _generate_image_litellm(
         self,
@@ -195,8 +258,6 @@ class AIClient:
         images: list[tuple[str, bytes]],
         method_name: str,
     ) -> Any | None:
-        import litellm
-
         from harunobu.core.ai_metrics import track_ai_call
 
         content: list[dict[str, Any]] = []
@@ -212,15 +273,9 @@ class AIClient:
 
         model_id = self._get_litellm_model_id()
         with track_ai_call(method_name, model_id) as tracker:
-            response = litellm.completion(
-                model=model_id,
-                messages=[{"role": "user", "content": content}],
-                temperature=0.1,
-                response_format={"type": "json_object"},
-            )
+            response = self._litellm_completion(model_id, [{"role": "user", "content": content}])
             tracker.set_tokens_from_response(response)
-            text = response.choices[0].message.content
-            return json.loads(text) if text else None
+            return _parse_json_response(response.choices[0].message.content)
 
     # ─── google.genai バックエンド ───────────────────────────────────
 
@@ -246,8 +301,7 @@ class AIClient:
                         ),
                     )
                     tracker.set_tokens_from_response(response)
-                    text = response.text
-                    return json.loads(text) if text else None
+                    return _parse_json_response(response.text)
             except Exception:
                 if model == models_to_try[-1]:
                     raise
@@ -285,8 +339,7 @@ class AIClient:
                         ),
                     )
                     tracker.set_tokens_from_response(response)
-                    text = response.text
-                    return json.loads(text) if text else None
+                    return _parse_json_response(response.text)
             except Exception:
                 if model == models_to_try[-1]:
                     raise
