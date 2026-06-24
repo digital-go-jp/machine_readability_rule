@@ -45,6 +45,22 @@ JSON 形式の場合は違反箇所の数に関わらず、全ての違反箇所
 
 > AI補完機能を有効にする場合は、Gemini / OpenAI / Anthropic 等のマルチプロバイダーに対応した API キー（または Vertex AI 環境）が必要です。詳しくは [AI設定ガイド](docs/guides/ai-configuration.md) を参照してください。
 
+pythonのパッケージマネージャーは `uv` を使用しています。
+uvのインストール方法についてはuv公式のスタンドアロンインストーラーを利用してのインストールを推奨しています。
+
+**Windows:**
+
+```shell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Mac OS / Linux:**
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+※ `python pip install .` でもインストールできますが、パッケージの厳密なバージョン固定がされない点にご留意ください。
 
 ## Streamlit UI 利用方法
 
@@ -89,6 +105,38 @@ UPLOAD → PREVIEW → VALIDATION → SCORING → RESULT
 詳細なStreamlit UIの操作方法については [UI操作マニュアル](docs/guides/user-manual-ui.md) をご確認ください。
 
 ## CLI 利用方法
+### インストール方法
+
+以下のいずれかの方法で利用可能です。
+
+1: 本リポジトリ内で起動する場合
+
+```bash
+uv sync
+```
+
+2: ライブラリとしてインストールして起動する場合
+
+```bash
+uv pip install "harunobu @ git+https://github.com/digital-go-jp/machine_readability_rule.git#subdirectory=sample_app"
+
+# AI補完機能も使用する場合
+uv pip install "harunobu[ai] @ git+https://github.com/digital-go-jp/machine_readability_rule.git#subdirectory=sample_app"
+curl -o .env https://raw.githubusercontent.com/digital-go-jp/machine_readability_rule/refs/heads/main/sample_app/.env.example
+```
+
+3: PEP 723 形式でスクリプト内に依存を埋め込む場合:
+
+```python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#   "harunobu @ git+https://github.com/digital-go-jp/machine_readability_rule.git#subdirectory=sample_app",
+# ]
+# ///
+```
+
+### CLIの使い方
 
 ```bash
 
@@ -107,24 +155,29 @@ uv run harunobu analyze data.xlsx --out-path result.json
 
 ## Python API 利用方法
 
+ライブラリとしてインストールした場合は、以下のようにPythonのスクリプトから利用できます。
+
 ```python
 from pathlib import Path
-from harunobu import Config, analyze
-from harunobu.core.scorer import LevelScorer
 
-# デフォルト設定で採点
-result = analyze(Path("data.xlsx"), Config())
+from harunobu import AnalysisResult, Config, analyze
+from harunobu.core.models import CheckResult
+from harunobu.core.scorer import LevelScorer, LevelScoring
 
-# レベル別スコアを取得（L1/L2/L3 それぞれ 0〜100 点）
+# analyze() → AnalysisResult: ファイル全体の採点結果（シート → テーブル → ルール）
+result: AnalysisResult = analyze(Path("data.xlsx"), Config())
+
+# score_analysis() → LevelScoring: L1/L2/L3 ごとの LevelScore（per_level: dict[int, LevelScore]）
 scorer = LevelScorer()
-scoring = scorer.score_analysis(result)
+scoring: LevelScoring = scorer.score_analysis(result)
 for level, level_score in scoring.per_level.items():
     print(f"L{level}: {level_score.score} 点 ({level_score.passed}/{level_score.total} ルール合格)")
 
-# シートごと・テーブルごとのルール結果を確認
+# all_results() → dict[str, CheckResult]: rule_id ごとの OK/NG・confidence・violations 等
 for sheet in result.sheets:
     for table in sheet.tables:
-        for rule_id, check in table.mr_result.all_results().items():
+        rule_results: dict[str, CheckResult] = table.mr_result.all_results()
+        for rule_id, check in rule_results.items():
             print(f"{rule_id}: {'OK' if check.passed else 'NG'} (confidence: {check.confidence:.2f})")
 ```
 
