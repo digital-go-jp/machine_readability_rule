@@ -45,6 +45,20 @@ JSON 形式の場合は違反箇所の数に関わらず、全ての違反箇所
 
 > AI補完機能を有効にする場合は、Gemini / OpenAI / Anthropic 等のマルチプロバイダーに対応した API キー（または Vertex AI 環境）が必要です。詳しくは [AI設定ガイド](docs/guides/ai-configuration.md) を参照してください。
 
+pythonのパッケージマネージャーは `uv` を使用しています。
+uvのインストール方法についてはuv公式のスタンドアロンインストーラーを利用してのインストールを推奨しています。
+
+**Windows:**
+
+```shell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Mac OS / Linux:**
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ## Streamlit UI 利用方法
 
