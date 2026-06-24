@@ -60,6 +60,8 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+※ `python pip install .` でもインストールできますが、パッケージの厳密なバージョン固定がされない点にご留意ください。
+
 ## Streamlit UI 利用方法
 
 ここではブラウザ上でファイルをアップロードするWEBアプリとしてHarunobuを起動する場合の利用方法を記載します。
