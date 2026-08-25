@@ -4,8 +4,7 @@
 ``original_rule_descriptions.json`` から読み込み、``RuleBase.original_description``
 に提供する。
 
-原本は ``docs/references/machine-readability-rules.json`` を出典とし、
-更新フローは ``script/update_original_rule_descriptions.py`` を参照。
+原本は ``docs/references/machine-readability-rules.json`` を出典とする
 """
 
 from __future__ import annotations

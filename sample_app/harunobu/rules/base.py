@@ -49,7 +49,7 @@ class RuleBase(ABC):
 
         ``rule_name``/``description`` とは異なり各ルールのクラス属性としては
         持たせず、``docs/references/machine-readability-rules.json`` を出典とする
-        ``app/harunobu/resources/original_rule_descriptions.json`` から rule_id を
+        ``harunobu/resources/original_rule_descriptions.json`` から rule_id を
         キーに参照する。原本の長文を30ルール分クラス属性へ複製すると更新時の
         同期漏れが起きやすいため、一元管理リソースへのプロパティ参照とした。
         同梱データの更新は ``script/update_original_rule_descriptions.py`` を参照。
