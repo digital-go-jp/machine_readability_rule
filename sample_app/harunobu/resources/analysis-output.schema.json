@@ -47,9 +47,10 @@
     },
     "failedRule": {
       "type": "object",
-      "required": ["ルールID", "重大度"],
+      "required": ["ルールID", "ルール名", "重大度"],
       "properties": {
         "ルールID": { "type": "string" },
+        "ルール名": { "type": "string" },
         "重大度": { "type": "string", "enum": ["fatal", "critical", "major", "minor", "info"] }
       },
       "additionalProperties": false
@@ -156,9 +157,22 @@
     },
     "checkResult": {
       "type": "object",
-      "required": ["ルールID", "合否", "判定対象外", "重大度", "信頼度", "違反", "メッセージ"],
+      "required": [
+        "ルールID",
+        "ルール名",
+        "ルール説明",
+        "合否",
+        "判定対象外",
+        "重大度",
+        "信頼度",
+        "違反",
+        "メッセージ"
+      ],
       "properties": {
         "ルールID": { "type": "string", "pattern": "^L[1-3]-\\d{2}$" },
+        "ルール名": { "type": "string" },
+        "ルール説明": { "type": "string" },
+        "原本説明": { "type": "string" },
         "合否": { "type": "boolean" },
         "判定対象外": { "type": "boolean" },
         "重大度": { "type": "string", "enum": ["fatal", "critical", "major", "minor", "info"] },

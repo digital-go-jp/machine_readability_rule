@@ -10,6 +10,7 @@ from harunobu.core.models import (
     TableContext,
 )
 from harunobu.core.severity import Severity
+from harunobu.resources.original_rule_descriptions import load_original_rule_descriptions
 
 
 class TargetFormat(str, Enum):
@@ -41,6 +42,20 @@ class RuleBase(ABC):
 
         同一入力に対して常に同一の結果を返すこと（冪等性）。
         """
+
+    @property
+    def original_description(self) -> str:
+        """デジタル庁 機械可読性チェックリスト原本における当該ルールの説明文。
+
+        ``rule_name``/``description`` とは異なり各ルールのクラス属性としては
+        持たせず、``docs/references/machine-readability-rules.json`` を出典とする
+        ``app/harunobu/resources/original_rule_descriptions.json`` から rule_id を
+        キーに参照する。原本の長文を30ルール分クラス属性へ複製すると更新時の
+        同期漏れが起きやすいため、一元管理リソースへのプロパティ参照とした。
+        同梱データの更新は ``script/update_original_rule_descriptions.py`` を参照。
+        未登録の rule_id の場合は空文字を返す。
+        """
+        return load_original_rule_descriptions().get(self.rule_id, {}).get("description", "")
 
     def explain(self) -> str:
         """このルールの背景と対処法を人間向けに説明する。"""
