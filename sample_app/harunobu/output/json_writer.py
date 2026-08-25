@@ -61,11 +61,26 @@ from typing import Any
 
 from harunobu.core.models import AnalysisResult, CellRange, CheckResult, SheetResult, TableResult
 from harunobu.core.scorer import LevelScore, LevelScorer
+from harunobu.rules.base import RuleBase
 from harunobu.rules.bulk_base import BulkAnalysisResult
+from harunobu.rules.registry import registry
 
 
-def to_dict(result: AnalysisResult) -> dict[str, Any]:
-    """AnalysisResult を日本語キーの辞書に変換する。"""
+def _rule_meta(rule: RuleBase | None) -> tuple[str, str, str]:
+    """ルールの名称・説明・原本説明を返す。rule が None なら空文字のタプル。"""
+    if rule is None:
+        return "", "", ""
+    return rule.rule_name, rule.description, rule.original_description
+
+
+def to_dict(result: AnalysisResult, *, include_original_description: bool = False) -> dict[str, Any]:
+    """AnalysisResult を日本語キーの辞書に変換する。
+
+    Args:
+        result: 変換対象の解析結果。
+        include_original_description: True の場合、各チェック結果にデジタル庁
+            機械可読性チェックリスト原本の説明文（``原本説明``）を含める。
+    """
     scoring = LevelScorer().score_analysis(result)
     return {
         "inputファイル名": result.file_meta.name,
@@ -73,22 +88,33 @@ def to_dict(result: AnalysisResult) -> dict[str, Any]:
         "フォーマット": result.file_meta.format,
         "Sheet数": result.file_meta.sheet_count,
         "レベル別スコア": {str(level): _level_score_to_dict(scoring.per_level[level]) for level in (1, 2, 3)},
-        "sheets": [_sheet_to_dict(s) for s in result.sheets],
+        "sheets": [_sheet_to_dict(s, include_original_description=include_original_description) for s in result.sheets],
     }
 
 
-def to_json(result: AnalysisResult, *, indent: int = 2) -> str:
+def to_json(result: AnalysisResult, *, indent: int = 2, include_original_description: bool = False) -> str:
     """AnalysisResult を JSON 文字列に変換する。"""
-    return json.dumps(to_dict(result), ensure_ascii=False, indent=indent)
+    return json.dumps(
+        to_dict(result, include_original_description=include_original_description),
+        ensure_ascii=False,
+        indent=indent,
+    )
 
 
-def write_json(result: AnalysisResult, path: str, *, indent: int = 2) -> None:
+def write_json(
+    result: AnalysisResult, path: str, *, indent: int = 2, include_original_description: bool = False
+) -> None:
     """AnalysisResult を JSON ファイルに書き出す。"""
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(to_dict(result), f, ensure_ascii=False, indent=indent)
+        json.dump(
+            to_dict(result, include_original_description=include_original_description),
+            f,
+            ensure_ascii=False,
+            indent=indent,
+        )
 
 
-def to_bulk_dict(bulk_result: BulkAnalysisResult) -> dict[str, Any]:
+def to_bulk_dict(bulk_result: BulkAnalysisResult, *, include_original_description: bool = False) -> dict[str, Any]:
     """BulkAnalysisResult を日本語キーの辞書に変換する。
 
     複数ファイル総合スコア・ファイル横断チェック結果に加え、各ファイルの結果を
@@ -99,19 +125,28 @@ def to_bulk_dict(bulk_result: BulkAnalysisResult) -> dict[str, Any]:
         "複数ファイル総合スコア": bulk_result.total_score,
         "ファイル数": bulk_result.file_count,
         "ファイル横断チェック": {
-            rule_id: _check_to_dict(rule_id, cr) for rule_id, cr in bulk_result.bulk_checks.items()
+            rule_id: _check_to_dict(rule_id, cr, include_original_description=include_original_description)
+            for rule_id, cr in bulk_result.bulk_checks.items()
         },
         "ファイル別平均スコア": [
             {"ファイル名": r.file_meta.name, "平均スコア": s}
             for r, s in zip(bulk_result.files, per_file_scores, strict=True)
         ],
-        "ファイル別結果": [to_dict(r) for r in bulk_result.files],
+        "ファイル別結果": [
+            to_dict(r, include_original_description=include_original_description) for r in bulk_result.files
+        ],
     }
 
 
-def to_bulk_json(bulk_result: BulkAnalysisResult, *, indent: int = 2) -> str:
+def to_bulk_json(
+    bulk_result: BulkAnalysisResult, *, indent: int = 2, include_original_description: bool = False
+) -> str:
     """BulkAnalysisResult を JSON 文字列に変換する。"""
-    return json.dumps(to_bulk_dict(bulk_result), ensure_ascii=False, indent=indent)
+    return json.dumps(
+        to_bulk_dict(bulk_result, include_original_description=include_original_description),
+        ensure_ascii=False,
+        indent=indent,
+    )
 
 
 def _level_score_to_dict(ls: LevelScore) -> dict[str, Any] | None:
@@ -123,18 +158,30 @@ def _level_score_to_dict(ls: LevelScore) -> dict[str, Any] | None:
         "合格": ls.passed,
         "合計": ls.total,
         "強制0点": ls.forced_zero,
-        "強制0点ルール": [{"ルールID": fr.rule_id, "重大度": fr.severity.value} for fr in ls.forced_zero_rules],
-        "失敗ルール": [{"ルールID": fr.rule_id, "重大度": fr.severity.value} for fr in ls.failed_rules],
+        "強制0点ルール": [_failed_rule_to_dict(fr.rule_id, fr.severity.value) for fr in ls.forced_zero_rules],
+        "失敗ルール": [_failed_rule_to_dict(fr.rule_id, fr.severity.value) for fr in ls.failed_rules],
     }
 
 
-def _sheet_to_dict(sheet_result: SheetResult) -> dict[str, Any]:
+def _failed_rule_to_dict(rule_id: str, severity: str) -> dict[str, Any]:
+    """失敗ルール／強制0点ルールのサマリーエントリを辞書に変換。"""
+    rule_name, _, _ = _rule_meta(registry.get_or_none(rule_id))
+    return {
+        "ルールID": rule_id,
+        "ルール名": rule_name,
+        "重大度": severity,
+    }
+
+
+def _sheet_to_dict(sheet_result: SheetResult, *, include_original_description: bool) -> dict[str, Any]:
     """シート結果を辞書に変換。"""
     d: dict[str, Any] = {
         "シート名": sheet_result.sheet_meta.name,
         "使用範囲": sheet_result.sheet_meta.used_range,
         "非表示": sheet_result.sheet_meta.hidden,
-        "評価対象エリア": [_table_to_dict(t) for t in sheet_result.tables],
+        "評価対象エリア": [
+            _table_to_dict(t, include_original_description=include_original_description) for t in sheet_result.tables
+        ],
     }
 
     if sheet_result.sheet_property:
@@ -160,7 +207,7 @@ def _sheet_to_dict(sheet_result: SheetResult) -> dict[str, Any]:
     return d
 
 
-def _table_to_dict(table_result: TableResult) -> dict[str, Any]:
+def _table_to_dict(table_result: TableResult, *, include_original_description: bool) -> dict[str, Any]:
     """テーブル結果を辞書に変換。"""
     d: dict[str, Any] = {
         "範囲": str(table_result.range),
@@ -168,7 +215,10 @@ def _table_to_dict(table_result: TableResult) -> dict[str, Any]:
         "ヘッダー行": table_result.layout.header_rows,
         "ヘッダー範囲": _header_range(table_result),
         "列数": table_result.range.end_col - table_result.range.start_col + 1,
-        "評価内容": [_check_to_dict(rule_id, cr) for rule_id, cr in table_result.mr_result.all_results().items()],
+        "評価内容": [
+            _check_to_dict(rule_id, cr, include_original_description=include_original_description)
+            for rule_id, cr in table_result.mr_result.all_results().items()
+        ],
     }
 
     if table_result.column_headers:
@@ -210,15 +260,20 @@ def _header_range(table_result: TableResult) -> str | None:
     )
 
 
-def _check_to_dict(rule_id: str, check_result: CheckResult) -> dict[str, Any]:
+def _check_to_dict(rule_id: str, check_result: CheckResult, *, include_original_description: bool) -> dict[str, Any]:
     """チェック結果を辞書に変換。"""
+    rule_name, description, original_description = _rule_meta(registry.get_or_none(rule_id))
     result: dict[str, Any] = {
         "ルールID": rule_id,
+        "ルール名": rule_name,
+        "ルール説明": description,
         "合否": check_result.passed,
         "判定対象外": check_result.is_skipped,
         "重大度": check_result.effective_severity.value,
         "信頼度": check_result.confidence,
     }
+    if include_original_description:
+        result["原本説明"] = original_description
 
     # 「違反」は常に生の Violation リスト（後方互換性を保つ）
     result["違反"] = [

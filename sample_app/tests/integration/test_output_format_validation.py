@@ -256,8 +256,31 @@ class TestJsonFormatValidation:
         d = json_writer.to_dict(result)
 
         check = d["sheets"][0]["評価対象エリア"][0]["評価内容"][0]
-        required_keys = {"ルールID", "合否", "判定対象外", "重大度", "信頼度", "違反", "メッセージ"}
+        required_keys = {
+            "ルールID",
+            "ルール名",
+            "ルール説明",
+            "合否",
+            "判定対象外",
+            "重大度",
+            "信頼度",
+            "違反",
+            "メッセージ",
+        }
         assert required_keys == set(check.keys())
+
+    def test_check_result_original_description_only_when_opted_in(self):
+        """original_description は include_original_description=True の時だけ出力される"""
+        result = _analysis(level1={"L1-01": _check(message="")})
+
+        d_default = json_writer.to_dict(result)
+        check_default = d_default["sheets"][0]["評価対象エリア"][0]["評価内容"][0]
+        assert "原本説明" not in check_default
+
+        d_opt_in = json_writer.to_dict(result, include_original_description=True)
+        check_opt_in = d_opt_in["sheets"][0]["評価対象エリア"][0]["評価内容"][0]
+        assert "原本説明" in check_opt_in
+        assert check_opt_in["原本説明"]
 
     def test_message_always_included_even_if_empty(self):
         """メッセージが空文字でもキーが出力される"""
@@ -382,6 +405,8 @@ class TestCsvFormatValidation:
             "ヘッダー範囲",
             "列数",
             "ルールID",
+            "ルール名",
+            "ルール説明",
             "合否",
             "判定対象外",
             "重大度",
@@ -393,6 +418,20 @@ class TestCsvFormatValidation:
             "メッセージ",
         ]
         assert csv_writer.HEADER == expected
+
+    def test_header_and_row_original_description_only_when_opted_in(self):
+        """原本説明列は include_original_description=True の時だけヘッダー・行に追加される"""
+        result = _analysis(level1={"L1-01": _check(message="")})
+
+        rows_default = csv_writer.to_rows(result)
+        assert "原本説明" not in rows_default[0]
+
+        rows_opt_in = csv_writer.to_rows(result, include_original_description=True)
+        header_opt_in = rows_opt_in[0]
+        assert "原本説明" in header_opt_in
+        idx = header_opt_in.index("原本説明")
+        assert header_opt_in[idx - 1] == "ルール説明"
+        assert rows_opt_in[1][idx]
 
     def test_csv_table_metadata_columns(self):
         """CSVにヘッダー範囲・列数が含まれる"""

@@ -71,6 +71,27 @@ def test_analyze_outputs_json(monkeypatch: pytest.MonkeyPatch, capsys: pytest.Ca
     assert "sheets" in parsed
 
 
+def test_analyze_excludes_original_description_by_default(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _run_cli(monkeypatch, ["analyze", str(_SAMPLE), "--output", "json"])
+
+    parsed = json.loads(capsys.readouterr().out)
+    check = parsed["sheets"][0]["評価対象エリア"][0]["評価内容"][0]
+    assert "原本説明" not in check
+
+
+def test_analyze_with_original_description_flag_includes_it(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _run_cli(monkeypatch, ["analyze", str(_SAMPLE), "--output", "json", "--with-original-description"])
+
+    parsed = json.loads(capsys.readouterr().out)
+    check = parsed["sheets"][0]["評価対象エリア"][0]["評価内容"][0]
+    assert "原本説明" in check
+    assert check["原本説明"]
+
+
 def test_top_level_sdk_exports() -> None:
     from harunobu import AnalysisResult, Config, analyze
 

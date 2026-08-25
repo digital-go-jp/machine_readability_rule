@@ -36,6 +36,15 @@ class RuleRegistry:
         """rule_id を指定して該当ルールを取得する。"""
         return self._rules[rule_id]
 
+    def get_or_none(self, rule_id: str) -> RuleBase | None:
+        """rule_id を指定して該当ルールを取得する。未 discover なら自動発見し、未登録なら None を返す。
+
+        出力ライター等、ルールの存在を前提にできない呼び出し元向けの安全な取得手段。
+        """
+        if not self._rules:
+            self.discover()
+        return self._rules.get(rule_id)
+
     def get_by_level(self, level: int) -> list[RuleBase]:
         """指定レベルに属するルールの一覧を返す。"""
         return [r for r in self._rules.values() if r.level == level]

@@ -18,9 +18,9 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     result = analyze(Path(args.file), config)
 
     if args.output == "json":
-        output = to_json(result)
+        output = to_json(result, include_original_description=args.with_original_description)
     else:
-        output = to_csv_string(result)
+        output = to_csv_string(result, include_original_description=args.with_original_description)
 
     if args.out_path:
         Path(args.out_path).write_text(output, encoding="utf-8")
@@ -67,6 +67,11 @@ def main() -> None:
     p_analyze.add_argument(
         "--out-path",
         help="出力先ファイルパス。省略時は標準出力に表示する",
+    )
+    p_analyze.add_argument(
+        "--with-original-description",
+        action="store_true",
+        help="出力に原本（デジタル庁機械可読性チェックリスト）の説明文を含める（既定: 含めない）",
     )
 
     args = parser.parse_args()

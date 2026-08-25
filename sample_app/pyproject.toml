@@ -1,6 +1,6 @@
 [project]
 name = "harunobu"
-version = "0.1.0"
+version = "0.2.0"
 description = "行政データ（Excel/CSV）の機械可読性を判定するシステム"
 readme = "README.md"
 license = {text = "MIT"}
