@@ -12,5 +12,5 @@
 
 ## 対象範囲
 
-- 機械可読性判定ツールサンプルアプリHarunobuの Python パッケージ（`./harunobu/`）
+- 機械可読性判定ツールHarunobuの Python パッケージ（`./harunobu/`）
 - Streamlit UI（`./harunobu/ui/`）
