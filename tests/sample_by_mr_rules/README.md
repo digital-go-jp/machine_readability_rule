@@ -5,11 +5,11 @@
 ```bash
 # pep723準拠のスクリプト pip install不要
 # 登録済みルール番号のサンプルをすべて生成（番号は RULE_GENERATORS_BY_NUMBER を参照）
-uv run generate_test_data.py
+uv run tests/sample_by_mr_rules/generate_test_data.py
 
 # 指定ルールだけ生成（他ルールの samples は削除・再生成しない）
-uv run generate_test_data.py --rules 8
-uv run generate_test_data.py -r 7,8
+uv run tests/sample_by_mr_rules/generate_test_data.py --rules 8
+uv run tests/sample_by_mr_rules/generate_test_data.py --r 7,8
 ```
 
 - `--rules` / `-r` を省略すると全ルール。指定時は **その番号の `rule_XX_*` だけ** を削除してから再生成する。

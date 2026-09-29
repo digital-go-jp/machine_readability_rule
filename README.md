@@ -23,7 +23,7 @@
 ## 機械可読性ルール判定ツール「Harunobu」の機能
 
 判定対象となるExcel/CSVファイルについて、機械可読性ルールに従い、決定論的に機械可読性を100点満点で採点します。（AI補完オプションあり）
-採点は機械可読性ルールのレベルごとに行われ、採点結果はレベル１で100点、レベル2で40点、レベル3で0点のように出力されます。
+採点は機械可読性ルールのレベルごとに行われ、採点結果はレベル1で100点、レベル2で40点、レベル3で0点のように出力されます。
 採点結果は各レベルで満たすべき基準にどの程度満たせているかを測る基準としてご利用ください。
 Harunobu においては、各ルールの重大度をFATAL, CRITICAL, MAJOR, MINORと定めて配点を決定しています。
 ルールごとの配点表は [ルール配点表](docs/rule_scoring_table.csv) をご確認ください。
@@ -74,7 +74,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-※ `python pip install .` でもインストールできますが、パッケージの厳密なバージョン固定がされない点にご留意ください。
+※ `python -m pip install .` でもインストールできますが、パッケージの厳密なバージョン固定がされない点にご留意ください。
 
 ## Streamlit UI 利用方法
 
@@ -259,6 +259,6 @@ Issue への対応は、内部の優先度判断に基づき行います。
 ## ライセンスについて
 
 * 行政データにおける機械可読性に関するルールを記載した以下のファイル及び各種ドキュメントファイル（.md）については、[公共データ利用規約第1.0版（PDL1.0）ライセンス](./LICENSE.md)が適用されます。
-  * [machine-redability-rules.json](./machine-readability-rules.json)
-  * [machine-redability-rules.csv](./machine-readability-rules.csv)
+  * [machine-readability-rules.json](./machine-readability-rules.json)
+  * [machine-readability-rules.csv](./machine-readability-rules.csv)
 * サンプル実装ツール部分には[MITライセンス](./LICENSE-MIT.md)が適用されます。
