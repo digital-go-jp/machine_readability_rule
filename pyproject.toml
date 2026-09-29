@@ -44,7 +44,7 @@ dev = [
 
 [project.urls]
 Repository = "https://github.com/digital-go-jp/machine_readability_rule"
-Documentation = "https://github.com/digital-go-jp/machine_readability_rule/tree/main/sample_app/docs"
+Documentation = "https://github.com/digital-go-jp/machine_readability_rule/tree/main/docs"
 "Bug Tracker" = "https://github.com/digital-go-jp/machine_readability_rule/issues"
 
 [project.scripts]

@@ -5,7 +5,7 @@ Harunobu は採点結果を **JSON** と **CSV** の2形式で出力します。
 - **JSON出力**: システム連携やAIエージェント向け。ファイル、シート、テーブル、ルール結果を階層構造で保持します。
 - **CSV出力**: 人間の確認や表計算ソフトでの一覧確認向け。1行が「1ファイル x 1シート x 1テーブル x 1ルール」の結果です。
 
-`sample_app/harunobu/resources/analysis-output.schema.json` は、現行JSON出力を説明する参考スキーマです。バージョン管理された互換性契約ではありません。
+`./harunobu/resources/analysis-output.schema.json` は、現行JSON出力を説明する参考スキーマです。バージョン管理された互換性契約ではありません。
 
 ## JSON 出力
 

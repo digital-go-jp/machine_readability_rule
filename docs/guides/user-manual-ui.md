@@ -5,10 +5,9 @@ Harunobu の Streamlit UI では、Excel/CSV/TSV ファイルをアップロー�
 
 ## 起動方法
 
-ローカル環境では `sample_app/` ディレクトリから Streamlit を起動します。
+ローカル環境では `app.py` のあるrootディレクトリから Streamlit を起動します。
 
 ```bash
-cd sample_app
 uv run streamlit run app.py
 ```
 

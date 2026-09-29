@@ -1,7 +1,7 @@
 # Licensing Information
 
 This repository contains components under different licenses.
-- Source code in the `sample_app/` directory is licensed under the MIT License.
+- Source code in this directory is licensed under the MIT License.
 - Documentation, images, and specific data files are licensed under the Public Data License 1.0 (PDL 1.0).
 
 ---

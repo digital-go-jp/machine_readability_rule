@@ -6,7 +6,7 @@ Harunobu のスコアリングは**決定論的**に行われます。同一の�
 
 AI 補完レイヤー（LLMマルチプロバイダー: Gemini / OpenAI / Anthropic）はオプショナルであり、有効な場合は信頼度（confidence）の向上に寄与しますが、スコア計算のロジック自体は決定論的ルールに基づきます。
 
-実装: `sample_app/harunobu/core/scorer.py` / `sample_app/harunobu/core/severity.py`
+実装: `./harunobu/core/scorer.py` / `./harunobu/core/severity.py`
 
 ## ルールの判定結果
 
@@ -83,7 +83,7 @@ Bulk合格率   = (Bulk ルール合格数 / Bulk ルール有効数) × 100
 
 Bulk ルールが存在しない、または有効な Bulk ルールが 0 件の場合は `ファイル別平均` をそのまま返します。
 
-実装: `sample_app/harunobu/rules/bulk_base.py` `BulkAnalysisResult.total_score`
+実装: `./harunobu/rules/bulk_base.py` `BulkAnalysisResult.total_score`
 
 ## 集計粒度
 
