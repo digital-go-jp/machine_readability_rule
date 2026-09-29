@@ -85,7 +85,6 @@ AIモードが有効な場合、以下のルールが決定論的チェックに
 #### 1. 環境変数ファイルの作成
 
 ```bash
-cd sample_app
 cp .env.example .env
 ```
 
@@ -134,7 +133,6 @@ ANTHROPIC_API_KEY=your-api-key-here
 ### 3. AI機能の確認
 
 ```bash
-cd sample_app
 uv run harunobu analyze sample.xlsx --mode thorough
 ```
 
@@ -180,7 +178,7 @@ LibreOfficeがインストールされていない場合、AIVisualAnalyzerは�
 
 ### AI機能が動作しない
 
-1. `.env` ファイルが `sample_app/` ディレクトリにあることを確認
+1. `.env` ファイルが root ディレクトリにあることを確認
 2. `HARUNOBU_AI_DISABLED` が設定されていないことを確認
 3. `HARUNOBU_AI_PROVIDER` に対応するAPIキーが正しく設定されていることを確認
 4. 非Geminiプロバイダーの場合、`litellm` がインストールされていることを確認

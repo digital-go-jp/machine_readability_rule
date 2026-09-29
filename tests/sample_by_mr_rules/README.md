@@ -16,10 +16,10 @@ uv run generate_test_data.py -r 7,8
 
 ## データ生成スクリプト追加方法
 
-1. `sample_app/tests/sample_by_mr_rules/sample_generators/` 配下に `rule_XX_xxx.py` を追加する
+1. `./tests/sample_by_mr_rules/sample_generators/` 配下に `rule_XX_xxx.py` を追加する
 2. 各 module に `generate(output_dir: Path) -> list[Path]` を実装する
-3. `sample_app/tests/sample_by_mr_rules/sample_generators/__init__.py` に import を追加し、`RULE_GENERATORS_BY_NUMBER` にルール番号をキーとして登録する（`RULE_GENERATORS` はこれから生成される）
-4. 共通処理は `sample_app/tests/sample_by_mr_rules/sample_generators/common.py` に寄せる
+3. `./tests/sample_by_mr_rules/sample_generators/__init__.py` に import を追加し、`RULE_GENERATORS_BY_NUMBER` にルール番号をキーとして登録する（`RULE_GENERATORS` はこれから生成される）
+4. 共通処理は `./tests/sample_by_mr_rules/sample_generators/common.py` に寄せる
 
 最小例:
 
@@ -44,7 +44,7 @@ def generate(output_dir: Path) -> list[Path]:
 - OK 例は `..._OK.ext`、NG 例は `..._NG-01.ext` の形式にそろえること
 - workbook を作る場合も csv/pdf/docx を作る場合も、最終的に生成されたファイルの `Path` を返すこと
 - `generate_test_data.py` 側で、**実行対象の** rule の既存生成物（`rule_XX_` に一致するファイル）を消してから再生成するため、出力ファイル名は `rule_XX_` で始めること（全ルール実行時は全番号ぶん、 `--rules` 指定時はその番号ぶんのみ削除）
-- 依存ライブラリを増やす場合は `sample_app/tests/sample_by_mr_rules/generate_test_data.py` 先頭の PEP 723 metadata も更新すること
+- 依存ライブラリを増やす場合は `./tests/sample_by_mr_rules/generate_test_data.py` 先頭の PEP 723 metadata も更新すること
 
 ## 補足
 
