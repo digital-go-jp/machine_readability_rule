@@ -42,7 +42,7 @@ tests/
 ## テストの実行
 
 ```bash
-cd app
+cd ./
 
 # 全テスト実行
 uv run pytest
