@@ -15,6 +15,7 @@ from typing import IO, Any
 
 import openpyxl
 from openpyxl.cell.cell import Cell as OpenpyxlCell
+from openpyxl.cell.read_only import ReadOnlyCell
 from openpyxl.worksheet.worksheet import Worksheet
 
 from harunobu.core import ooxml_inspector
@@ -520,12 +521,19 @@ def _parse_worksheet_fast(ws, meta: dict, *, max_rows: int, max_cols: int) -> Sh
     )
 
 
-def _convert_cell_readonly(opx_cell) -> Cell | None:
-    """read_only モードのセルを内部 Cell に変換する。
+def _extract_bg_color(opx_cell: OpenpyxlCell | ReadOnlyCell) -> str | None:
+    """セルに直接設定された RGB 背景色を返す。"""
+    fill = opx_cell.fill
+    if not getattr(fill, "patternType", None):
+        return None
+    color = fill.fgColor
+    if color and color.type == "rgb" and isinstance(color.rgb, str):
+        return color.rgb
+    return None
 
-    read_only モードではフォント・書式情報が限定的なため、
-    値と位置情報のみ取得する。
-    """
+
+def _convert_cell_readonly(opx_cell) -> Cell | None:
+    """read_only モードのセルを内部 Cell に変換する。"""
     row: int = opx_cell.row
     col: int = opx_cell.column
 
@@ -537,7 +545,7 @@ def _convert_cell_readonly(opx_cell) -> Cell | None:
         value = None
 
     # read_only モードでも基本的な書式は取得可能
-    fmt = CellFormat()
+    fmt = CellFormat(bg_color=_extract_bg_color(opx_cell))
 
     # スタイル情報が取得可能な場合のみ設定
     try:
@@ -684,19 +692,11 @@ def _convert_cell(opx_cell: OpenpyxlCell) -> Cell | None:
 
     # 書式情報
     font = opx_cell.font
-    fill = opx_cell.fill
-
     font_color: str | None = None
     if font and font.color and font.color.rgb and font.color.rgb != "00000000":
         rgb = font.color.rgb
         if isinstance(rgb, str):
             font_color = rgb
-
-    bg_color: str | None = None
-    if fill and fill.fgColor and fill.fgColor.rgb and fill.fgColor.rgb != "00000000":
-        rgb = fill.fgColor.rgb
-        if isinstance(rgb, str):
-            bg_color = rgb
 
     alignment_str: str | None = None
     if opx_cell.alignment:
@@ -718,7 +718,7 @@ def _convert_cell(opx_cell: OpenpyxlCell) -> Cell | None:
         bold=bool(font and font.bold),
         italic=bool(font and font.italic),
         font_color=font_color,
-        bg_color=bg_color,
+        bg_color=_extract_bg_color(opx_cell),
         number_format=opx_cell.number_format if opx_cell.number_format != "General" else None,
         alignment=alignment_str,
         border_left=border_left,

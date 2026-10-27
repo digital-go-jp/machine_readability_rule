@@ -578,6 +578,35 @@ class TestTwoPassApproach:
         assert s1.hidden_cols == s2.hidden_cols
         assert s1.merged_cells == s2.merged_cells
 
+    @pytest.mark.parametrize("two_pass", [False, True], ids=["single-pass", "two-pass"])
+    @pytest.mark.parametrize("source", ["bytes", "path"])
+    def test_background_colors_are_read_consistently(self, tmp_path: Path, monkeypatch, two_pass, source):
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        for row in range(1, 8):
+            sheet.cell(row, 1, f"値{row}")
+        sheet["A2"].fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor="FFFFFF00")
+        sheet["A3"].fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor="000000")
+        sheet["A4"].fill = openpyxl.styles.PatternFill(fgColor="FFFFFF00")
+        sheet["A5"].fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor="FFFFFF")
+        sheet["A6"].fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor=openpyxl.styles.Color(theme=4))
+        sheet["A7"].fill = openpyxl.styles.PatternFill(fill_type="solid", fgColor=openpyxl.styles.Color(indexed=5))
+        data = io.BytesIO()
+        workbook.save(data)
+        if two_pass:
+            monkeypatch.setattr("harunobu.core.reader._SINGLE_PASS_THRESHOLD", 0)
+
+        if source == "bytes":
+            data.seek(0)
+            result = read_workbook("colors.xlsx", data)
+        else:
+            path = tmp_path / "colors.xlsx"
+            path.write_bytes(data.getvalue())
+            result = read_file(path)
+
+        colors = [result.sheets[0].get_cell(row, 1).fmt.bg_color for row in range(1, 8)]
+        assert colors == [None, "FFFFFF00", "00000000", None, "00FFFFFF", None, None]
+
     def test_threshold_routes_correctly(self, tmp_path: Path, monkeypatch):
         """ファイルサイズに応じて1パス/2パスが切り替わること"""
         wb = openpyxl.Workbook()

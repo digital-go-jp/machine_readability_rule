@@ -5,13 +5,20 @@ from __future__ import annotations
 import csv
 import io
 import json
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
+import pytest
+from openpyxl import Workbook
+
+from harunobu.core.analyzer import Analyzer
 from harunobu.core.models import (
     AnalysisResult,
     CellRange,
     CheckResult,
     FileMeta,
     MRResult,
+    OtherCell,
     SheetMeta,
     SheetResult,
     TableLayout,
@@ -19,6 +26,7 @@ from harunobu.core.models import (
     Violation,
 )
 from harunobu.output import csv_writer, json_writer
+from harunobu.rules.bulk_base import BulkAnalysisResult
 
 
 def _make_analysis_result(
@@ -89,6 +97,78 @@ def _make_skipped_and_normal_result() -> AnalysisResult:
 
 class TestJsonOutput:
     """JSON出力の統合テスト。"""
+
+    @pytest.mark.parametrize(
+        ("iso_dates", "expected_date"),
+        [(False, "2025-03-10T00:00:00"), (True, "2025-03-10")],
+    )
+    def test_excel_others_are_serialized_as_json(self, iso_dates, expected_date, tmp_path):
+        """表外の日時セルを含む Excel を各 JSON 出力経路で扱える。"""
+        workbook = Workbook()
+        workbook.iso_dates = iso_dates
+        sheet = workbook.active
+        for row in [("ID", "名前", "数量"), (1, "部品A", 5), (2, "部品B", 10)]:
+            sheet.append(row)
+        values = {
+            2: date(2025, 3, 10),
+            8: datetime(2025, 3, 10, 13, 45, 12),
+            14: time(13, 45, 12),
+            20: timedelta(hours=27, minutes=30),
+            26: "文字列",
+            32: 42,
+            38: True,
+            44: 3.25,
+        }
+        for row, value in values.items():
+            sheet.cell(row=row, column=14, value=value)
+
+        data = io.BytesIO()
+        workbook.save(data)
+        data.seek(0)
+        result = Analyzer(mode="standard").analyze_file("dates.xlsx", data)
+        others = result.sheets[0].others
+
+        expected_raw = {**values, 2: values[2] if iso_dates else datetime(2025, 3, 10)}
+        assert {(o.row, o.col, o.region_type): o.value for o in others} == {
+            (row, 14, "isolated"): value for row, value in expected_raw.items()
+        }
+
+        parsed = json.loads(json_writer.to_json(result))
+        expected_values = {
+            **values,
+            2: expected_date,
+            8: "2025-03-10T13:45:12",
+            14: "13:45:12",
+            20: "P1DT3H30M",
+        }
+        assert parsed["sheets"][0]["others"] == [
+            {"row": row, "col": 14, "value": value, "regionType": "isolated"} for row, value in expected_values.items()
+        ]
+        parsed_values = {cell["row"]: cell["value"] for cell in parsed["sheets"][0]["others"]}
+        assert type(parsed_values[32]) is int
+        assert parsed_values[38] is True
+        assert type(parsed_values[44]) is float
+        assert json_writer.to_dict(result) == parsed
+
+        path = tmp_path / "result.json"
+        json_writer.write_json(result, str(path))
+        assert json.loads(path.read_text(encoding="utf-8")) == parsed
+
+        bulk = BulkAnalysisResult(files=[result, _make_analysis_result(file_name="other.xlsx")])
+        bulk_dict = json_writer.to_bulk_dict(bulk)
+        assert bulk_dict["ファイル別結果"][0] == parsed
+        assert json.loads(json_writer.to_bulk_json(bulk)) == bulk_dict
+        assert {o.row: o.value for o in others} == expected_raw
+
+    def test_unsupported_other_value_still_fails_to_serialize(self):
+        """対応対象外の値は勝手に文字列化しない。"""
+        result = _make_analysis_result()
+        value = Decimal("1.23")
+        result.sheets[0].others = [OtherCell(row=2, col=14, value=value, region_type="isolated")]
+
+        assert json_writer.to_dict(result)["sheets"][0]["others"][0]["value"] == value
+        with pytest.raises(TypeError, match="Decimal"):
+            json_writer.to_json(result)
 
     def test_to_json_produces_valid_json(self):
         """to_jsonが有効なJSON文字列を返す"""

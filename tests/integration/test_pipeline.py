@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
+from io import BytesIO
 
-from harunobu.core.analyzer import MRChecker, analyze_sheet
+import pytest
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill
+
+from harunobu.core.analyzer import Analyzer, MRChecker, analyze_sheet
 from harunobu.core.models import (
     CellRange,
     CheckResult,
@@ -21,6 +25,30 @@ from harunobu.rules.level1.L1_05_column_headers import ColumnHeadersRule
 from harunobu.rules.level1.L1_12_merged_cells import MergedCellsRule
 from harunobu.rules.level2.L2_03_unique_headers import UniqueHeadersRule
 from harunobu.rules.registry import RuleRegistry, registry
+
+
+@pytest.mark.parametrize("two_pass", [False, True], ids=["single-pass", "two-pass"])
+def test_colored_stub_column_with_missing_value(monkeypatch, two_pass):
+    monkeypatch.setenv("HARUNOBU_AI_DISABLED", "true")
+    if two_pass:
+        monkeypatch.setattr("harunobu.core.reader._SINGLE_PASS_THRESHOLD", 0)
+    workbook = Workbook()
+    sheet = workbook.active
+    for row in [("コード", "売上"), (1, 1200), (2, 800), (None, 900), (3, 600), (4, 500)]:
+        sheet.append(row)
+    for row in range(2, 7):
+        sheet.cell(row, 1).fill = PatternFill(fill_type="solid", fgColor="FFFFFF00")
+    data = BytesIO()
+    workbook.save(data)
+    data.seek(0)
+
+    result = Analyzer(mode="standard").analyze_file("sales.xlsx", data)
+    table = result.sheets[0].tables[0]
+    check = table.mr_result.all_results()["L2-02"]
+
+    assert table.layout.stub_cols == [1]
+    assert check.passed is False
+    assert any(violation.cell_range == "R4C1" for violation in check.violations)
 
 
 class TestFullPipeline:
