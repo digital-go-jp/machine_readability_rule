@@ -16,6 +16,14 @@ except ImportError:
     AIVisualAnalyzer = None  # type: ignore[assignment, misc]
 
 
+def _normalize_bg_color(color: str | None) -> str | None:
+    """塗りなしと白を同じ既定状態とし、RGB のアルファ値を除く。"""
+    if not color:
+        return None
+    rgb = color[-6:].upper()
+    return None if rgb == "FFFFFF" else rgb
+
+
 class FormatBasedSemanticsRule(RuleBase):
     """書式（色、太字等）のみでデータの意味を区別していないことを確認する。"""
 
@@ -28,7 +36,6 @@ class FormatBasedSemanticsRule(RuleBase):
     severity = Severity.CRITICAL
     # デフォルト書式（問題なし）
     _DEFAULT_FONT_COLORS = {None, "000000", "FF000000"}
-    _DEFAULT_BG_COLORS = {None, "FFFFFF", "00000000", "FFFFFFFF"}
 
     def check(self, context: TableContext) -> CheckResult:
         """書式（色・太字等）のみでデータの意味を区別していないかを検査する。"""
@@ -64,7 +71,7 @@ class FormatBasedSemanticsRule(RuleBase):
 
                 total_cells += 1
                 font_colors.add(cell.fmt.font_color)
-                bg_colors.add(cell.fmt.bg_color)
+                bg_colors.add(_normalize_bg_color(cell.fmt.bg_color))
                 if cell.fmt.bold:
                     bold_count += 1
                 if cell.fmt.italic:
@@ -85,14 +92,16 @@ class FormatBasedSemanticsRule(RuleBase):
                     )
                 )
 
-            # 背景色のバリエーションが2種以上（デフォルト色を除く）
-            non_default_bg_colors = bg_colors - self._DEFAULT_BG_COLORS
-            if len(non_default_bg_colors) >= 2:
+            # 塗りなしと白を既定状態としてまとめ、2種類以上の塗りを検出
+            if len(bg_colors) >= 2:
                 violations.append(
                     Violation(
                         sheet=sheet.name,
                         cell_range=f"列{c}",
-                        description=f"列{c}で背景色が複数使用されています（{len(bg_colors)}種類）。書式ではなくデータ値で区別してください。",
+                        description=(
+                            f"列{c}で背景色または塗りの有無が異なっています（{len(bg_colors)}種類）。"
+                            "書式だけでデータを区別していないか確認してください。"
+                        ),
                         severity="warning",
                     )
                 )

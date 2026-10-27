@@ -57,9 +57,10 @@ AnalysisResult を日本語キーの JSON 形式に変換する。
 from __future__ import annotations
 
 import json
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
-from harunobu.core.models import AnalysisResult, CellRange, CheckResult, SheetResult, TableResult
+from harunobu.core.models import AnalysisResult, CellRange, CheckResult, OtherCell, SheetResult, TableResult
 from harunobu.core.scorer import LevelScore, LevelScorer
 from harunobu.rules.base import RuleBase
 from harunobu.rules.bulk_base import BulkAnalysisResult
@@ -173,6 +174,16 @@ def _failed_rule_to_dict(rule_id: str, severity: str) -> dict[str, Any]:
     }
 
 
+def _other_cell_value(cell: OtherCell) -> Any:
+    """テーブル外セルの日時・経過時間を JSON 用の文字列に変換する。"""
+    value = cell.value
+    if isinstance(value, (date, datetime, time)):
+        return value.isoformat()
+    if isinstance(value, timedelta):
+        return cell.model_dump(mode="json")["value"]
+    return value
+
+
 def _sheet_to_dict(sheet_result: SheetResult, *, include_original_description: bool) -> dict[str, Any]:
     """シート結果を辞書に変換。"""
     d: dict[str, Any] = {
@@ -198,7 +209,7 @@ def _sheet_to_dict(sheet_result: SheetResult, *, include_original_description: b
             {
                 "row": o.row,
                 "col": o.col,
-                "value": o.value,
+                "value": _other_cell_value(o),
                 "regionType": o.region_type,
             }
             for o in sheet_result.others
