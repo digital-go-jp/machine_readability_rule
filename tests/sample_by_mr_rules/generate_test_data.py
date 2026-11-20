@@ -4,7 +4,7 @@
 #   "openpyxl>=3.1.0",
 #   "python-docx>=1.1.2",
 #   "reportlab>=4.4.0",
-#   "pillow>=10.0.0",
+#   "pillow>=13.0.0",
 #   "xlsxwriter>=3.1.0",
 # ]
 # ///

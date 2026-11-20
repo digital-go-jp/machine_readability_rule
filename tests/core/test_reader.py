@@ -630,6 +630,34 @@ class TestTwoPassApproach:
 class TestAttachObjectArtifacts:
     """_attach_object_artifacts が Sheet.object_refs / object_refs_loaded を正しく設定する。"""
 
+    @pytest.mark.parametrize("image_format", ["PNG", "JPEG"])
+    @pytest.mark.parametrize("read_xlsx", [_read_xlsx_single_pass, _read_xlsx_two_pass], ids=["single", "two"])
+    def test_embedded_image_preserves_cells_and_object_ref(self, image_format, read_xlsx):
+        """実画像を含むExcelを読み込み、セルと画像の位置を保持する。"""
+        from openpyxl.drawing.image import Image as ExcelImage
+        from PIL import Image
+
+        image_data = io.BytesIO()
+        with Image.new("RGB", (16, 12), color="orange") as image:
+            image.save(image_data, format=image_format)
+        image_data.seek(0)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws["A1"] = "画像付きデータ"
+        ws["B2"] = 123
+        ws.add_image(ExcelImage(image_data), "C3")
+        data = io.BytesIO()
+        wb.save(data)
+        wb.close()
+
+        sheet = read_xlsx(data.getvalue(), "image.xlsx", max_rows=100, max_cols=100).sheets[0]
+
+        assert sheet.get_cell_value(1, 1) == "画像付きデータ"
+        assert sheet.get_cell_value(2, 2) == 123
+        assert sheet.object_refs_loaded is True
+        assert sheet.object_refs_error is None
+        assert [(ref.object_type, ref.row, ref.col) for ref in sheet.object_refs] == [("image", 3, 3)]
+
     def _make_xlsx_bytes_no_drawing(self) -> bytes:
         """drawing なしの最小 xlsx バイト列を返す。"""
         wb = openpyxl.Workbook()
