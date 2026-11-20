@@ -52,7 +52,7 @@ JSON 形式の場合は違反箇所の数に関わらず、全ての違反箇所
 | 項目 | 要件 |
 |------|------|
 | OS | Windows / macOS / Linux |
-| Python | 3.10 以上 |
+| Python | 3.11 以上 |
 | メモリ | 1 GB 以上（大規模ファイル処理時は2 GB以上を推奨） |
 
 利用にあたって必要なライブラリなどの詳細情報は [THIRD-PARTY-NOTICE.txt](./THIRD-PARTY-NOTICE.txt) を参照してください。

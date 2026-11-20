@@ -1,6 +1,6 @@
 [project]
 name = "harunobu"
-version = "0.2.2"
+version = "0.3.0"
 description = "行政データ（Excel/CSV）の機械可読性を判定するシステム"
 readme = "README.md"
 license = {text = "MIT"}
@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -22,7 +21,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Office/Business :: Financial :: Spreadsheet",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "magika>=1.0.2",
     "openpyxl>=3.1.0",
@@ -33,7 +32,7 @@ dependencies = [
 [project.optional-dependencies]
 litellm = ["litellm>=1.40.0"]
 ai = ["harunobu[litellm]", "google-genai>=1.0.0"]
-ui = ["streamlit>=1.57.0", "pandas>=2.0.0"]
+ui = ["streamlit>=1.66.1", "pandas>=2.0.0", "pillow>=13.0.0"]
 all = ["harunobu[ai,ui]"]
 dev = [
     "pytest>=8.0.0",
@@ -60,11 +59,10 @@ packages = ["harunobu"]
 [tool.uv]
 # 直近公開パッケージの取り込みを遅らせ、サプライチェーン攻撃の影響を抑える
 exclude-newer = "14 days"
-exclude-newer-package = { certifi = "2026-10-21T00:00:00Z" }
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "D"]
@@ -91,5 +89,5 @@ markers = [
 dev = [
     "jsonschema>=4.26.0",
     "matplotlib>=3.10.8",
-    "pillow>=12.1.1",
+    "pillow>=13.0.0",
 ]
